@@ -1,0 +1,15 @@
+<people>
+  <nombre>Pedro</nombre>
+  <apellido>Lerida</apellido>
+  <edad>29</edad>
+</people>
+<people>
+  <nombre>Lucia</nombre>
+  <apellido>Lopez</apellido>
+  <edad>32</edad>
+</people>
+<people>
+  <nombre>Esteban</nombre>
+  <apellido>Gonzalez</apellido>
+  <edad>31</edad>
+</people>

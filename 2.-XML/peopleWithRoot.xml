@@ -1,0 +1,12 @@
+<peopleWorld>
+  <people>
+    <name>lucas</name>
+    <job>dev</job>
+    <age>23</age>
+  </people>
+  <people>
+    <name>Andrea</name>
+    <job>dev</job>
+    <age>26</age>
+  </people>
+</peopleWorld>
