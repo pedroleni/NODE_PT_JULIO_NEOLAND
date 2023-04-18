@@ -1,0 +1,16 @@
+{
+  "name": "3.inquirer",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "",
+  "scripts": {
+    "start": "node inquirer.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^9.1.4"
+  }
+}
