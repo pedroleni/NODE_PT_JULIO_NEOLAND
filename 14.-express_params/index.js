@@ -20,6 +20,9 @@ router.get("/name", (req, res) => {
 });
 
 // PARAMS ----> son obligatorios sino rompe la ejecucion o no hace match con la routa
+
+//// ------> EJERCICIO PARA CORREGIR EL SIGUIENTE DIA------------
+
 router.get("/person/:name", (req, res) => {
   const { name } = req.params;
   ///const name = req.params.name  ----> ESTO ES LO MISMO QUE LO DE ARRIBA
