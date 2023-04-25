@@ -29,19 +29,15 @@ router.get("/person/:name", (req, res) => {
   const people = ["Luis", "Lorena", "Felipe", "Joaquin", "Luis"];
 
   /// quiero encontrar a la persona que estoy mamndando por los params
-
-  const peopleToLowerCase = people.map((element, index) => {
-    return element.toLowerCase() === name.toLowerCase() && index;
+  const indexWord = [];
+  people.map((element, index) => {
+    element.toLowerCase() === name.toLowerCase() && indexWord.push(index);
   });
 
-  console.log(peopleToLowerCase);
-
   /// ----> SOLO NOS VALE CUANDO TENEMOS UN ELEMENTO: const index = peopleToLowerCase.indexOf(name.toLowerCase());
-  if (!peopleToLowerCase) {
-    res.send("No lo he encontrado");
-  } else {
-    res.send(`Se encuentra en la posicion ${peopleToLowerCase.toString()}`);
-  }
+  indexWord.length === 0
+    ? res.send("No lo he encontrado")
+    : res.send(`Se encuentra en la posicion ${indexWord.toString()}`);
 });
 
 app.use("/", router);
