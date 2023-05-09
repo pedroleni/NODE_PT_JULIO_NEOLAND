@@ -8,7 +8,7 @@ const EventsSchema = new Schema(
   {
     name: { type: String, required: true },
     description: { type: String, required: true },
-    place: { type: String, required: true },
+    place: { type: String, enum: ["playa", "montaña"], required: true },
     hour: { type: String, required: true },
     day: [{ type: mongoose.Types.ObjectId, ref: "Calendar" }],
   },
