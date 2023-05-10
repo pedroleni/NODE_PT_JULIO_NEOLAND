@@ -1,6 +1,8 @@
 const express = require("express");
 const Calendar = require("../model/calendar.model");
 const Events = require("../../Events/model/events.model");
+const { setCalendar } = require("../../../utils/dataGlobal/dataGlobal");
+const { getCalendar } = require("../../../utils/dataGlobal/dataGlobal");
 
 const router = express.Router();
 
@@ -162,6 +164,66 @@ router.delete("/delete/:id", async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+});
+
+//! -------------------------------------------------------------------
+//? -----------EJEMPLO DE REDIRECT BASICO CON TRASNPASO DE INFO -------
+//? --------------- teoria de los getters y los setters---------------
+//! -------------------------------------------------------------------
+
+//! -----INTENTAR EVITAR ESTO, LOS REDIRECT NO RECIBAN INFO, si acaso por el param-----
+// Para mandar datos entre los redirect hay que hacer una especie de estado donde
+// guardemos nuestra variable que se modificara con el setCalendar y que nos traera
+// la data actualizada con el getCalendar
+
+// Esto es la teoria de los getters y los setters, es muy utlizado en JAVA  pero es muy util
+// para este tipo de casuistica  ya que no podemos enviar datos a el redirect de forma directa
+// podriamos hacerlo con sesiones o cookies
+
+router.get("/hola/hola", async (req, res, next) => {
+  const dataCurrent = getCalendar();
+  return res.status(200).json(dataCurrent);
+});
+
+router.get("/hola/redirect/check", async (req, res, next) => {
+  /// aqui recibo por el body esta info y la destructuro para luego mandarse como parametro
+  /// solo se va a permitir cuando hayamos recibido los tres paramentros por el body
+
+  const { date, description, img } = req.body;
+
+  if (date !== undefined && description !== undefined && img !== undefined) {
+    setCalendar(date, description, img);
+    return res.redirect("http://localhost:8081/api/v1/calendar/hola/hola");
+  } else {
+    return res.status(404).json("Necesito que introduzca los tres parametros");
+  }
+});
+
+//!--------------------------------------------------------------------------------
+//? ---------Ejemplo de redirect recibiendo info por el param----------------------
+//! ------------------------------------------------------------------------------
+// En este caso tenemos una routa que recibe por params un id
+// este id a su vez lo recibe la routa a la que redirecciona
+// y la routa que redirecciona lo que hace es un findById y lo
+// devuelve por la res
+router.get("/prueba/prueba/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const calendarById = await Calendar.findById(id);
+    if (calendarById) {
+      return res.status(200).json(calendarById);
+    } else {
+      return res.status(404).json("No found calendar by id");
+    }
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get("/redirect/check/:id", (req, res) => {
+  return res.redirect(
+    `http://localhost:8081/api/v1/calendar/prueba/prueba/${req.params.id}`
+  );
 });
 
 module.exports = router;

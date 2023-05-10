@@ -1,0 +1,26 @@
+let bodyCalendar = {
+  date: "",
+  description: "",
+  img: "",
+};
+
+const getCalendar = () => {
+  return bodyCalendar;
+};
+
+const setCalendar = (
+  date = bodyCalendar.date,
+  description = bodyCalendar.description,
+  img = bodyCalendar.img
+) => {
+  bodyCalendar = {
+    date,
+    description,
+    img,
+  };
+};
+
+module.exports = {
+  getCalendar,
+  setCalendar,
+};
