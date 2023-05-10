@@ -168,7 +168,7 @@ router.delete("/delete/:id", async (req, res, next) => {
 
 //! -------------------------------------------------------------------
 //? -----------EJEMPLO DE REDIRECT BASICO CON TRASNPASO DE INFO -------
-//? --------------- teoria de los getters y los setters---------------
+//? --------------- teoria de los getters y los setters----------------
 //! -------------------------------------------------------------------
 
 //! -----INTENTAR EVITAR ESTO, LOS REDIRECT NO RECIBAN INFO, si acaso por el param-----
