@@ -71,6 +71,10 @@ router.get("/", async (req, res, next) => {
 router.get("/name/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
+
+    // recordar que el find nos permite traernos todosl os elementos que nosotros pongamos en las condicones de sus parentesis
+    //! EL FIND DEVUELVE UN ARRAY DE ELMENTOS
+    //! EL FINDBYID DEVUELVE O UN OBJETO O DEVUELVE UN NULL SI NO LO HA ENCONTRADO
     const eventByName = await Events.find({ name }).populate("day");
     if (eventByName) {
       return res.status(200).json(eventByName);
@@ -90,6 +94,9 @@ router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     console.log(id);
+
+    /// populate nos sirve para que los elementos del Schema del modelo que esten
+    //con objectID podamos acceder a su info de otro modelo
     const eventById = await Events.findById(id).populate("day");
     if (eventById) {
       return res.status(200).json(eventById);
@@ -105,13 +112,21 @@ router.get("/:id", async (req, res, next) => {
 //? ---------------------------PATCH --------------------------------
 //! -------------------------------------------------------------------
 router.patch("/:id", async (req, res, next) => {
+  //patch es un metodo para hacer una modificacion partial de los elementos de la coleccion
   try {
+    // lo primero es muy importante es que actualicemos los indexes de los elementos unique de nuestra bdo
     await Events.syncIndexes();
+
+    // nos traemos el id de los param y hacemos la actualizacion metiendole la info del req.body
     const { id } = req.params;
     const updateEvent = await Events.findByIdAndUpdate(id, req.body);
+
+    /// evaluamos que la operacion sea ok
     if (updateEvent) {
+      // si es ok devolvemos una respuesta con el evento actualizado con el findById
       return res.status(200).json(await Events.findById(id));
     } else {
+      // sino devolvemos una respuesta con que no hemos podido actualizar el elemento
       return res.status(404).json(" Error updateEvents");
     }
   } catch (error) {
@@ -128,7 +143,11 @@ router.delete("/:id", async (req, res, next) => {
     const { id } = req.params;
     const deleteEvent = await Events.findByIdAndDelete(id);
     if (deleteEvent) {
+      // si se ha producido el borrado lo que vamos a hacer es actualizar Calendar
+      // Vamos a sacarle todos los id del array de events a calendar, el id del evento borrado
       await Calendar.updateMany({ events: id }, { $pull: { events: id } });
+
+      //hacemos un pequeño test con un ternario para saber si se ha borrado correctamente y que el cliente tenga feedback
       return res.status(200).json({
         finally: "ok operation delete event",
         deleteEvent: deleteEvent,
@@ -138,10 +157,12 @@ router.delete("/:id", async (req, res, next) => {
             : "error delete event",
       });
     } else {
-      return res.status(404).json("error in first step");
+      // si se lanza esto quiere decir que no se ha encontrado por id y por ello no ha podido borrar
+      return res.status(404).json("error in first step, Not found event by id");
     }
   } catch (error) {
     return next(error);
   }
 });
+
 module.exports = router;
