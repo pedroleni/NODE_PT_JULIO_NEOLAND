@@ -119,4 +119,29 @@ router.patch("/:id", async (req, res, next) => {
   }
 });
 
+//! -------------------------------------------------------------------
+//? ---------------------------DELETE --------------------------------
+//! -------------------------------------------------------------------
+
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const deleteEvent = await Events.findByIdAndDelete(id);
+    if (deleteEvent) {
+      await Calendar.updateMany({ events: id }, { $pull: { events: id } });
+      return res.status(200).json({
+        finally: "ok operation delete event",
+        deleteEvent: deleteEvent,
+        test:
+          (await Events.findById(id)) === null
+            ? "Ok borrado correctamente"
+            : "error delete event",
+      });
+    } else {
+      return res.status(404).json("error in first step");
+    }
+  } catch (error) {
+    return next(error);
+  }
+});
 module.exports = router;
