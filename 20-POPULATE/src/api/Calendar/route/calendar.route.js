@@ -226,4 +226,42 @@ router.get("/redirect/check/:id", (req, res) => {
   );
 });
 
+//!--------------------------------------------------------------------------------
+//? ---------Ejemplo de redirect recibiendo info por el query----------------------
+//! ------------------------------------------------------------------------------
+// Express.js y HTTP en general no admiten redirecciones directas a una ruta POST.
+// Una redirección HTTP implica enviar una respuesta de vuelta al cliente con un
+// código de estado 3xx y una URL de redirección, luego el cliente realiza una
+// nueva solicitud a esa URL. Normalmente, esta nueva solicitud es de tipo GET.
+
+// Si necesitas que el cliente haga una solicitud POST después de recibir una
+// redirección, deberás implementar este comportamiento en el lado del cliente.
+
+// Una forma común de hacer esto es redirigir al cliente a una página que
+// contenga un formulario que se enviará automáticamente a la ruta POST que desees.
+
+//? Por en este redirect aunque hace un post tiene que ir como un get
+
+router.get("/query/prueba", async (req, res, next) => {
+  try {
+    //const { date, description, img } = req.query;
+    const newCalendar = new Calendar(req.query);
+    const saveCalendar = await newCalendar.save();
+    if (saveCalendar) {
+      return res.status(200).json(saveCalendar);
+    } else {
+      return res.status(404).json("Error save calendar");
+    }
+  } catch (error) {
+    return next(error);
+  }
+});
+// recordar las query no son obligatorias aunque en la routa de redirect se vuelven obligatorias
+/// porque sino en el save y el new Calendar lanzara error
+router.get("/redirect/query/query", (req, res) => {
+  return res.redirect(
+    `http://localhost:8081/api/v1/calendar/query/prueba?date=${req.body.date}&description=${req.body.description}&img=${req.body.img}`
+  );
+});
+
 module.exports = router;
