@@ -44,7 +44,7 @@ app.use(express.urlencoded({ extended: false }));
 
 const calendarRouter = require("./src/api/Calendar/route/calendar.route");
 const eventsRouter = require("./src/api/Events/route/events.route");
-
+// ----> METEMOS LA VERSION DEL PROYECTO CON EL api/v1
 app.use("/api/v1/calendar", calendarRouter);
 app.use("/api/v1/events", eventsRouter);
 
