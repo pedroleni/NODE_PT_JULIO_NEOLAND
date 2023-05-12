@@ -27,8 +27,11 @@ app.use((req, res, next) => {
     "Authorization, X-API-KEY, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method"
   );
   /// VERBOS  PERMITIDOS EN NUESTRA
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
-  res.header("Allow", "GET, POST, PUT, PATCH, DELETE");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+  res.header("Allow", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   next();
 });
 
