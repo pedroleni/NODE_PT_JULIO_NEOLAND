@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const setError = require('../../helpers/handle-error');
+const { deleteImgCloudinary } = require('../../middlewares/files.middleware');
 dotenv.config();
 
 //! ------------------------------------------------------------------------
@@ -10,6 +11,7 @@ dotenv.config();
 //! ------------------------------------------------------------------------
 
 const register = async (req, res, next) => {
+  let catchImg = req.file?.path;
   try {
     //! lo primero actualizar los index de los elementos unique
     await User.syncIndexes();
@@ -45,6 +47,7 @@ const register = async (req, res, next) => {
     });
 
     if (userExists) {
+      deleteImgCloudinary(catchImg);
       return next(setError(409, 'This user already exist'));
     } else {
       const createUser = await newUser.save();
@@ -72,10 +75,63 @@ const register = async (req, res, next) => {
       });
     }
   } catch (error) {
-    return next(setError(500, error.message || 'failed create user'));
+    deleteImgCloudinary(catchImg);
+    return next(
+      setError(error.code || 500, error.message || 'failed create user')
+    );
+  }
+};
+
+//! ------------------------------------------------------------------------
+//? -------------------------- CHECK NEW USER------------------------------
+//! ------------------------------------------------------------------------
+
+const checkNewUser = async (req, res, next) => {
+  try {
+    //! nos traemos de la req.body el email y codigo de confirmation
+    const { email, confirmationCode } = req.body;
+
+    //! hay que ver que el usuario exista porque si no existe no tiene sentido hacer ninguna verificacion
+    const userExists = await User.findOne({ email });
+    if (!userExists) {
+      //!No existe----> 404 de no se encuentra
+      return res.status(404).json('User not found');
+    } else {
+      // cogemos que comparamos que el codigo que recibimos por la req.body y el del userExists es igual
+      if (confirmationCode === userExists.confirmationCode) {
+        // si es igual actualizamos la propiedad check y la ponemos a true
+        await userExists.updateOne({ check: true });
+        // hacemos un testeo de que este user se ha actualizado correctamente, hacemos un findOne
+        const updateUser = await User.findOne({ email });
+
+        // este finOne nos sirve para hacer un ternario que nos diga si la propiedad vale true o false
+        return res.status(200).json({
+          testCheckOk: updateUser.check == true ? true : false,
+        });
+      } else {
+        /// En caso dec equivocarse con el codigo lo borramos de la base datos y lo mandamos al registro
+        const deleteUser = await User.findByIdAndDelete(userExists._id);
+
+        // borramos la imagen
+        deleteImgCloudinary(userExists.image);
+
+        // devolvemos un 200 con el test de ver si el delete se ha hecho correctamente
+        return res.status(200).json({
+          userExists,
+          check: false,
+          delete: (await User.findById(userExists._id))
+            ? 'error delete user'
+            : 'ok delete user',
+        });
+      }
+    }
+  } catch (error) {
+    // siempre en el catch devolvemos un 500 con el error general
+    return next(setError(500, 'General error check code'));
   }
 };
 
 module.exports = {
   register,
+  checkNewUser,
 };
