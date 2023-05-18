@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const nodemailer = require('nodemailer');
 const setError = require('../../helpers/handle-error');
 const { deleteImgCloudinary } = require('../../middlewares/files.middleware');
+const { generateToken } = require('../../utils/token');
 dotenv.config();
 
 //! ------------------------------------------------------------------------
@@ -131,7 +132,94 @@ const checkNewUser = async (req, res, next) => {
   }
 };
 
+//! ------------------------------------------------------------------------
+//? -------------------------- RESEND CODE CONFIRMATION---------------------
+//! ------------------------------------------------------------------------
+
+const resendCode = async (req, res, next) => {
+  try {
+    //! vamos a configurar nodemailer porque tenemos que enviar un codigo
+    const email = process.env.EMAIL;
+    const password = process.env.PASSWORD;
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: email,
+        pass: password,
+      },
+    });
+    //! hay que ver que el usuario exista porque si no existe no tiene sentido hacer ninguna verificacion
+    const userExists = await User.findOne({ email: req.body.email });
+
+    if (userExists) {
+      const mailOptions = {
+        from: email,
+        to: req.body.email,
+        subject: 'Confirmation code Madrid Delta',
+        text: `tu codigo es ${userExists.confirmationCode}`,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+          return res.status(200).json({
+            resend: true,
+          });
+        }
+      });
+    } else {
+      return res.status(404).json('User not found');
+    }
+  } catch (error) {
+    return next(setError(500, error.message || 'Error general send code'));
+  }
+};
+
+//! ------------------------------------------------------------------------
+//? ------------------------------- LOGIN ----------------------------------
+//! ------------------------------------------------------------------------
+
+const login = async (req, res, next) => {
+  try {
+    // nos traemos el email y la password del req.body
+    const { email, password } = req.body;
+
+    // buscamos el usuario
+    const user = await User.findOne({ email });
+    // si no hay usuario entonces lanzamos una respuesta 404 con user not found
+    if (!user) {
+      return res.status(404).json('User no found');
+    } else {
+      // miramos si las contraseñas son iguales
+      if (bcrypt.compareSync(password, user.password)) {
+        // si lo hay generamos un token
+        const token = generateToken(user._id, email);
+
+        // devolvemos el user auth y el token
+        return res.status(200).json({
+          user: {
+            email,
+            _id: user._id,
+          },
+          token,
+        });
+      } else {
+        // si la contraseña no esta correcta enviamos un 404 con el invalid password
+        return res.status(404).json('invalid password');
+      }
+    }
+  } catch (error) {
+    return next(
+      setError(500 || error.code, 'General error login' || error.message)
+    );
+  }
+};
+
 module.exports = {
   register,
   checkNewUser,
+  resendCode,
+  login,
 };
