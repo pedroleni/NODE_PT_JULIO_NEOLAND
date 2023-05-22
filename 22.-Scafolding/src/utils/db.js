@@ -1,7 +1,7 @@
 //! ------- CREAMOS LA FUNCION QUE CONECTA CON LA BASE DE DATOS: MONGO DB ---------
 
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 dotenv.config();
 
 //! ----- NOS TRAERMOS LA MONGO_URI de nuestra DB ------------------------.-
@@ -20,7 +20,7 @@ const connect = async () => {
     const { host, name } = db.connection;
     console.log(`Connected to db: ${name} in host: ${host}`);
   } catch (error) {
-    console.log("Error connecting to db: ", error);
+    console.log('Error connecting to db: ', error);
   }
 };
 
