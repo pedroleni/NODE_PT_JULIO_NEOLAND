@@ -156,7 +156,7 @@ const resendCode = async (req, res, next) => {
       const mailOptions = {
         from: email,
         to: req.body.email,
-        subject: 'Confirmation code Madrid Delta',
+        subject: 'Confirmation code ',
         text: `tu codigo es ${userExists.confirmationCode}`,
       };
 
@@ -344,6 +344,88 @@ const modifyPassword = async (req, res, next) => {
 //? -------------------------------UPDATE ----------------------------------
 //! ------------------------------------------------------------------------
 
+const update = async (req, res, next) => {
+  let catchImg = req.file?.path;
+  try {
+    // instanciamos un nuevo modelo de user
+    const patchUser = new User(req.body);
+    // si tenemos la req.file le metemos el path de cloudinary
+    if (req.file) {
+      patchUser.image = req.file.path;
+    }
+    // estas cosas no quiero que me cambien por lo cual lo cojo del req.user gracias a que esto es con auth
+    patchUser._id = req.user._id;
+    patchUser.password = req.user.password;
+    patchUser.rol = req.user.rol;
+    patchUser.confirmationCode = req.user.confirmationCode;
+    patchUser.check = req.user.check;
+    patchUser.email = req.user.email;
+
+    // actualizamos en la db con el id y la instancia del modelo de user
+    await User.findByIdAndUpdate(req.user._id, patchUser);
+    // borrramos en cloudinary la imagen antigua
+    if (req.file) {
+      deleteImgCloudinary(req.user.image);
+    }
+
+    //! ----------------test  runtime ----------------
+    // buscamos el usuario actualizado
+    const updateUser = await User.findById(req.user._id);
+
+    // cogemos la keys del body
+    const updateKeys = Object.keys(req.body);
+
+    // creamos una variable para  guardar los test
+    const testUpdate = [];
+    // recorremos las keys y comparamos
+    updateKeys.forEach((item) => {
+      if (updateUser[item] == req.body[item]) {
+        testUpdate.push({
+          [item]: true,
+        });
+      } else {
+        testUpdate.push({
+          [item]: false,
+        });
+      }
+    });
+
+    if (req.file) {
+      updateUser.image == req.file.path
+        ? testUpdate.push({
+            file: true,
+          })
+        : testUpdate.push({
+            file: false,
+          });
+    }
+    return res.status(200).json({
+      testUpdate,
+    });
+  } catch (error) {
+    deleteImgCloudinary(catchImg);
+    return next(error);
+  }
+};
+
+//! ------------------------------------------------------------------------
+//? -------------------------------DELETE ----------------------------------
+//! ------------------------------------------------------------------------
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+    await User.findByIdAndDelete(_id);
+    if (await User.findById(_id)) {
+      return res.status(404).json('Dont delete');
+    } else {
+      deleteImgCloudinary(req.user.image);
+      return res.status(200).json('ok delete');
+    }
+  } catch (error) {
+    return next(error);
+  }
+};
 module.exports = {
   register,
   checkNewUser,
@@ -352,4 +434,6 @@ module.exports = {
   forgotPassword,
   sendPassword,
   modifyPassword,
+  update,
+  deleteUser,
 };

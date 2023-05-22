@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "format:check": "prettier --check",
+    "format:write": "prettier --write",
+    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "lint:check": "eslint",
+    "lint:fix": "eslint src --fix --cache"
   },
   "keywords": [],
   "author": "",

@@ -40,9 +40,8 @@ app.use((req, res, next) => {
 
 //! ----- DECIRLE EL TIPO DE SERVE WEB QUE VAMOS A TENER, UNA CONFIG BASICA INICIAL -----
 // Json Data
-app.use(express.json({ limit: '1mb' }));
-// urlEncoded
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 //! ------ LAS ROUTAS -------------------------------------------
 const UserRoutes = require('./src/api/routes/user.routes');

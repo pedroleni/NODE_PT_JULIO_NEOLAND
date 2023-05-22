@@ -8,6 +8,8 @@ const {
   forgotPassword,
   sendPassword,
   modifyPassword,
+  update,
+  deleteUser,
 } = require('../controllers/users.controller');
 const { isAuth, isAuthAdmin } = require('../../middlewares/auth.middleware');
 
@@ -19,6 +21,8 @@ UserRoutes.post('/resend', resendCode);
 UserRoutes.post('/login', login);
 UserRoutes.get('/forgotpassword', forgotPassword);
 UserRoutes.patch('/changepassword', [isAuth], modifyPassword);
+UserRoutes.patch('/update/update', [isAuth], upload.single('image'), update);
+UserRoutes.delete('/', [isAuth], deleteUser);
 
 //! -------REDIRECT --------------------
 
