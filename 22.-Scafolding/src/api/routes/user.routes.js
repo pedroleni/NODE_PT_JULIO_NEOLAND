@@ -11,7 +11,7 @@ const {
   update,
   deleteUser,
 } = require('../controllers/users.controller');
-const { isAuth, isAuthAdmin } = require('../../middlewares/auth.middleware');
+const { isAuth } = require('../../middlewares/auth.middleware');
 
 const UserRoutes = express.Router();
 
