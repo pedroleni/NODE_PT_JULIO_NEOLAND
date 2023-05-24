@@ -347,6 +347,8 @@ const modifyPassword = async (req, res, next) => {
 const update = async (req, res, next) => {
   let catchImg = req.file?.path;
   try {
+    // actualizamos los indexes de los elementos unicos por si han modificado
+    await User.syncIndexes();
     // instanciamos un nuevo modelo de user
     const patchUser = new User(req.body);
     // si tenemos la req.file le metemos el path de cloudinary
