@@ -49,7 +49,7 @@ const register = async (req, res, next) => {
     });
 
     if (userExists) {
-      deleteImgCloudinary(catchImg);
+      if (req.file) deleteImgCloudinary(catchImg);
       return next(setError(409, 'This user already exist'));
     } else {
       const createUser = await newUser.save();
@@ -77,7 +77,7 @@ const register = async (req, res, next) => {
       });
     }
   } catch (error) {
-    deleteImgCloudinary(catchImg);
+    if (req.file) deleteImgCloudinary(catchImg);
     return next(
       setError(error.code || 500, error.message || 'failed create user')
     );
@@ -405,7 +405,7 @@ const update = async (req, res, next) => {
       testUpdate,
     });
   } catch (error) {
-    deleteImgCloudinary(catchImg);
+    if (req.file) deleteImgCloudinary(catchImg);
     return next(error);
   }
 };
