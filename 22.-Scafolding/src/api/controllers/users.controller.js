@@ -52,29 +52,33 @@ const register = async (req, res, next) => {
       if (req.file) deleteImgCloudinary(catchImg);
       return next(setError(409, 'This user already exist'));
     } else {
-      const createUser = await newUser.save();
-      createUser.password = null;
+      try {
+        const createUser = await newUser.save();
+        createUser.password = null;
 
-      //!! --------VAMOS A ENVIAR EL CORREO .------
-      const mailOptions = {
-        from: email,
-        to: req.body.email,
-        subject: 'Code confirmation',
-        text: `Your code is ${confirmationCode}`,
-      };
+        //!! --------VAMOS A ENVIAR EL CORREO .------
+        const mailOptions = {
+          from: email,
+          to: req.body.email,
+          subject: 'Code confirmation',
+          text: `Your code is ${confirmationCode}`,
+        };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
-      });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log('Email sent: ' + info.response);
+          }
+        });
 
-      return res.status(201).json({
-        user: createUser,
-        confirmationCode: confirmationCode,
-      });
+        return res.status(201).json({
+          user: createUser,
+          confirmationCode: confirmationCode,
+        });
+      } catch (error) {
+        return res.status(404).json(error.message);
+      }
     }
   } catch (error) {
     if (req.file) deleteImgCloudinary(catchImg);
@@ -102,14 +106,18 @@ const checkNewUser = async (req, res, next) => {
       // cogemos que comparamos que el codigo que recibimos por la req.body y el del userExists es igual
       if (confirmationCode === userExists.confirmationCode) {
         // si es igual actualizamos la propiedad check y la ponemos a true
-        await userExists.updateOne({ check: true });
-        // hacemos un testeo de que este user se ha actualizado correctamente, hacemos un findOne
-        const updateUser = await User.findOne({ email });
+        try {
+          await userExists.updateOne({ check: true });
+          // hacemos un testeo de que este user se ha actualizado correctamente, hacemos un findOne
+          const updateUser = await User.findOne({ email });
 
-        // este finOne nos sirve para hacer un ternario que nos diga si la propiedad vale true o false
-        return res.status(200).json({
-          testCheckOk: updateUser.check == true ? true : false,
-        });
+          // este finOne nos sirve para hacer un ternario que nos diga si la propiedad vale true o false
+          return res.status(200).json({
+            testCheckOk: updateUser.check == true ? true : false,
+          });
+        } catch (error) {
+          return res.status(404).json(error.message);
+        }
       } else {
         /// En caso dec equivocarse con el codigo lo borramos de la base datos y lo mandamos al registro
         await User.findByIdAndDelete(userExists._id);
@@ -282,24 +290,28 @@ const sendPassword = async (req, res, next) => {
         const newPasswordHash = bcrypt.hashSync(passwordSecure, 10);
 
         // una vez hasheada la contraseña la guardo en el bakend
-        await User.findByIdAndUpdate(id, { password: newPasswordHash });
+        try {
+          await User.findByIdAndUpdate(id, { password: newPasswordHash });
 
-        /// !! --> TEESTEAMOS QUE SE HA HECHO TODO CORRECTAMENTE
-        //---> Nos traemos el user actualizado y hacemos un if comparando las contraseñas
-        const updateUser = await User.findById(id);
-        if (bcrypt.compareSync(passwordSecure, updateUser.password)) {
-          // si las contraseñas hacen match entonces mandamos un 200
-          return res.status(200).json({
-            updateUser: true,
-            sendPassword: true,
-          });
-        } else {
-          // si no son iguales le mandamos al frontal que el usuario no se ha actualizado aunque si ha
-          // recibido un correo con la contraseña que no es valida.
-          return res.status(404).json({
-            updateUser: false,
-            sendPassword: true,
-          });
+          /// !! --> TEESTEAMOS QUE SE HA HECHO TODO CORRECTAMENTE
+          //---> Nos traemos el user actualizado y hacemos un if comparando las contraseñas
+          const updateUser = await User.findById(id);
+          if (bcrypt.compareSync(passwordSecure, updateUser.password)) {
+            // si las contraseñas hacen match entonces mandamos un 200
+            return res.status(200).json({
+              updateUser: true,
+              sendPassword: true,
+            });
+          } else {
+            // si no son iguales le mandamos al frontal que el usuario no se ha actualizado aunque si ha
+            // recibido un correo con la contraseña que no es valida.
+            return res.status(404).json({
+              updateUser: false,
+              sendPassword: true,
+            });
+          }
+        } catch (error) {
+          return res.status(404).json(error.message);
         }
       }
     });
@@ -319,18 +331,22 @@ const modifyPassword = async (req, res, next) => {
     const { _id } = req.user;
     if (bcrypt.compareSync(password, req.user.password)) {
       const newPasswordHash = bcrypt.hashSync(newPassword, 10);
-      await User.findByIdAndUpdate(_id, { password: newPasswordHash });
+      try {
+        await User.findByIdAndUpdate(_id, { password: newPasswordHash });
 
-      const updateUser = await User.findById(_id);
+        const updateUser = await User.findById(_id);
 
-      if (bcrypt.compareSync(newPassword, updateUser.password)) {
-        return res.status(200).json({
-          updateUser: true,
-        });
-      } else {
-        return res.status(404).json({
-          updateUser: false,
-        });
+        if (bcrypt.compareSync(newPassword, updateUser.password)) {
+          return res.status(200).json({
+            updateUser: true,
+          });
+        } else {
+          return res.status(404).json({
+            updateUser: false,
+          });
+        }
+      } catch (error) {
+        return res.status(404).json(error.message);
       }
     } else {
       return res.status(404).json('password not match');
@@ -364,46 +380,50 @@ const update = async (req, res, next) => {
     patchUser.email = req.user.email;
 
     // actualizamos en la db con el id y la instancia del modelo de user
-    await User.findByIdAndUpdate(req.user._id, patchUser);
-    // borrramos en cloudinary la imagen antigua
-    if (req.file) {
-      deleteImgCloudinary(req.user.image);
-    }
-
-    //! ----------------test  runtime ----------------
-    // buscamos el usuario actualizado
-    const updateUser = await User.findById(req.user._id);
-
-    // cogemos la keys del body
-    const updateKeys = Object.keys(req.body);
-
-    // creamos una variable para  guardar los test
-    const testUpdate = [];
-    // recorremos las keys y comparamos
-    updateKeys.forEach((item) => {
-      if (updateUser[item] == req.body[item]) {
-        testUpdate.push({
-          [item]: true,
-        });
-      } else {
-        testUpdate.push({
-          [item]: false,
-        });
+    try {
+      await User.findByIdAndUpdate(req.user._id, patchUser);
+      // borrramos en cloudinary la imagen antigua
+      if (req.file) {
+        deleteImgCloudinary(req.user.image);
       }
-    });
 
-    if (req.file) {
-      updateUser.image == req.file.path
-        ? testUpdate.push({
-            file: true,
-          })
-        : testUpdate.push({
-            file: false,
+      //! ----------------test  runtime ----------------
+      // buscamos el usuario actualizado
+      const updateUser = await User.findById(req.user._id);
+
+      // cogemos la keys del body
+      const updateKeys = Object.keys(req.body);
+
+      // creamos una variable para  guardar los test
+      const testUpdate = [];
+      // recorremos las keys y comparamos
+      updateKeys.forEach((item) => {
+        if (updateUser[item] == req.body[item]) {
+          testUpdate.push({
+            [item]: true,
           });
+        } else {
+          testUpdate.push({
+            [item]: false,
+          });
+        }
+      });
+
+      if (req.file) {
+        updateUser.image == req.file.path
+          ? testUpdate.push({
+              file: true,
+            })
+          : testUpdate.push({
+              file: false,
+            });
+      }
+      return res.status(200).json({
+        testUpdate,
+      });
+    } catch (error) {
+      return res.status(404).json(error.message);
     }
-    return res.status(200).json({
-      testUpdate,
-    });
   } catch (error) {
     if (req.file) deleteImgCloudinary(catchImg);
     return next(error);
